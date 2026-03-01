@@ -39,6 +39,14 @@ Thumbs.db
 *.err
 /scratch/
 
+# Development / benchmark scripts (FGCZ-internal, not for public distribution)
+scripts/
+test_py.py
+vignette_bench.sh
+analysis_region3.html
+analysis_region1.qmd
+check.py
+
 # Credentials / local secrets
 .env
 .env.local
