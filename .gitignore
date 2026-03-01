@@ -1,7 +1,23 @@
 # Virtual environments
-.venv/
-.env/
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
+# FGCZ and Local Development files
+scripts/
+benchmarks/**/*.R
+benchmarks/**/*.sh
+test_*.py
+*debug*.py
+*.qmd
+*.html
+
+# Lockfiles
+uv.lock
 # Python
 __pycache__/
 *.pyc
@@ -45,6 +61,7 @@ test_py.py
 vignette_bench.sh
 analysis_region3.html
 analysis_region1.qmd
+analysis_region1.html
 check.py
 
 # Credentials / local secrets
