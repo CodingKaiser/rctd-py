@@ -13,7 +13,7 @@ keywords:
   - spatial-transcriptomics
   - deconvolution
   - single-cell
-  - JAX
+  - PyTorch
   - GPU
 references:
   - type: article
