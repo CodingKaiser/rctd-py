@@ -70,10 +70,12 @@ def _run_batched_scoring(
         expected_tr = torch.clamp(expected_tr, min=1e-4)
 
         bs = end - start
-        scores_batch = torch.stack([
-            calc_log_likelihood(B_tr[i], expected_tr[i], Q_gpu, SQ_gpu, X_gpu, K_val)
-            for i in range(bs)
-        ])
+        scores_batch = torch.stack(
+            [
+                calc_log_likelihood(B_tr[i], expected_tr[i], Q_gpu, SQ_gpu, X_gpu, K_val)
+                for i in range(bs)
+            ]
+        )
         all_scores.append(scores_batch.cpu().numpy())
 
     return np.concatenate(all_scores)

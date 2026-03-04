@@ -248,7 +248,9 @@ def _psd_batch(H: torch.Tensor, epsilon: float = 1e-3) -> tuple[torch.Tensor, to
     H_psd = eigenvectors @ torch.diag_embed(eigenvalues) @ eigenvectors.transpose(-1, -2)
     max_eig = eigenvalues[:, -1]
 
-    return H_psd.to(device=orig_device, dtype=orig_dtype), max_eig.to(device=orig_device, dtype=orig_dtype)
+    return H_psd.to(device=orig_device, dtype=orig_dtype), max_eig.to(
+        device=orig_device, dtype=orig_dtype
+    )
 
 
 @torch.jit.script
@@ -345,7 +347,7 @@ def solve_irwls_batch(
     eye_K = torch.eye(K, dtype=dtype, device=device)  # shared identity
 
     # Per-pixel convergence tracking
-    change = torch.full((N,), float('inf'), dtype=dtype, device=device)
+    change = torch.full((N,), float("inf"), dtype=dtype, device=device)
     converged = torch.zeros(N, dtype=torch.bool, device=device)
 
     # Threshold per pixel: max(1e-4, nUMI * 1e-7)
