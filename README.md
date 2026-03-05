@@ -22,7 +22,7 @@ Deconvolve spatial transcriptomics spots (Visium, Xenium, MERFISH, Slide-seq, �
 
 | | |
 |---|---|
-| 🚀 **4× end-to-end speedup** | Xenium 58k pixels: **12 min** (L40S GPU) vs 51 min (R, 8 CPU) |
+| 🚀 **4× end-to-end speedup** | Xenium 58k cells: **12 min** (L40S GPU) vs 51 min (R, 8 CPU) |
 | 🎯 **99.7% concordance** with R spacexr | **100%** with `sigma_override` — per-pixel solver is bit-identical |
 | 🔧 **Drop-in replacement** | Same algorithm, same parameters, same results — just faster |
 | 📦 **`pip install rctd-py`** | Pure Python, works on CPU out of the box |
@@ -91,7 +91,7 @@ print(torch.version.cuda)           # e.g. '12.4'
 
 ### Tested GPUs
 
-| GPU | VRAM | Speedup (58k pixels, K=45) |
+| GPU | VRAM | Speedup (58k cells, K=45) |
 |-----|------|---------------------------|
 | NVIDIA L40S | 48 GB | 4.3× |
 
@@ -123,10 +123,10 @@ Use the `batch_size` parameter in `run_rctd` to control GPU memory usage:
   <img src="docs/benchmark.png" alt="Benchmark barplot" width="700">
 </p>
 
-| Dataset | Pixels | R spacexr (8 CPU) | rctd-py (L40S GPU) | **Speedup** |
+| Dataset | # cells | R spacexr (8 CPU) | rctd-py (L40S GPU) | **Speedup** |
 |---------|--------|-------------------|---------------------|-------------|
-| Region 3 | 58k | 51.1 min | 11.8 min | **4.3×** |
-| Region 1 | 14k | 14.1 min | 3.5 min | **4.0×** |
+| Region 3 | 58,191 | 51.1 min | 11.8 min | **4.3×** |
+| Region 1 | 13,940 | 14.1 min | 3.5 min | **4.0×** |
 
 > **Note:** The IRWLS solver loop is memory-bandwidth bound for large cell type panels (K=45). Speedup scales with the number of cell types — smaller panels (K < 20) see larger speedups.
 
@@ -134,7 +134,7 @@ Use the `batch_size` parameter in `run_rctd` to control GPU memory usage:
 
 Validated against R spacexr on two Xenium datasets (45 cell types, 380 genes, doublet mode, `UMI_min=20`):
 
-| Dataset | Pixels | Dominant type agreement | With `sigma_override` |
+| Dataset | # cells | Dominant type agreement | With `sigma_override` |
 |---------|--------|------------------------|-----------------------|
 | Region 1 | 13,940 | **99.73%** | **100%** |
 | Region 3 | 58,191 | **99.71%** | — |
@@ -175,7 +175,7 @@ Stateful class for step-by-step control. Call `fit_platform_effects()`, then `ru
 |-----------|---------|-------------|
 | `UMI_min` | 100 | Minimum UMI count per pixel |
 | `UMI_min_sigma` | 300 | Minimum UMI for sigma estimation |
-| `N_fit` | 1000 | Pixels for sigma fitting |
+| `N_fit` | 1000 | # cells for sigma fitting |
 | `MAX_MULTI_TYPES` | 4 | Max cell types in multi mode |
 | `CONFIDENCE_THRESHOLD` | 5.0 | Singlet confidence threshold |
 | `DOUBLET_THRESHOLD` | 20.0 | Doublet certainty threshold |
