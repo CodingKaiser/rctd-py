@@ -8,7 +8,7 @@
     <a href="https://pypi.org/project/rctd-py/"><img src="https://img.shields.io/pypi/v/rctd-py" alt="PyPI"></a>
     <a href="https://pypi.org/project/rctd-py/"><img src="https://img.shields.io/pypi/pyversions/rctd-py" alt="Python"></a>
     <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License: GPL v3"></a>
-    <a href="https://codecov.io/gh/p-gueguen/rctd-py"><img src="https://codecov.io/gh/p-gueguen/rctd-py/branch/main/graph/badge.svg" alt="codecov"></a>
+
   </p>
 </p>
 
