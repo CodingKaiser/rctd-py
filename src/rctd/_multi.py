@@ -6,7 +6,7 @@ import torch
 from rctd._full import run_full_mode
 from rctd._irwls import solve_irwls_batch
 from rctd._likelihood import calc_log_likelihood
-from rctd._types import MultiResult, RCTDConfig
+from rctd._types import MultiResult, RCTDConfig, resolve_device
 
 
 def _run_batched_scoring(
@@ -146,6 +146,7 @@ def run_multi_mode(
     x_vals: np.ndarray,
     config: RCTDConfig,
     batch_size: int = 10000,
+    device: str = "auto",
 ) -> MultiResult:
     """Run multi mode deconvolution.
 
@@ -161,7 +162,7 @@ def run_multi_mode(
         batch_size: Number of pixels to process simultaneously on GPU
     """
     N, G = spatial_counts.shape
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = resolve_device(device)
 
     # 1. Full fit to get candidates
     full_res = run_full_mode(
@@ -173,6 +174,7 @@ def run_multi_mode(
         sq_mat=sq_mat,
         x_vals=x_vals,
         batch_size=batch_size,
+        device=str(device),
     )
     W_full = full_res.weights
 

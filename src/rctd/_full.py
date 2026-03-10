@@ -4,7 +4,7 @@ import numpy as np
 import torch
 
 from rctd._irwls import solve_irwls_batch
-from rctd._types import FullResult
+from rctd._types import FullResult, resolve_device
 
 
 def run_full_mode(
@@ -16,6 +16,7 @@ def run_full_mode(
     sq_mat: np.ndarray,
     x_vals: np.ndarray,
     batch_size: int = 10000,
+    device: str = "auto",
 ) -> FullResult:
     """Run full mode deconvolution across all spatial pixels.
 
@@ -33,7 +34,7 @@ def run_full_mode(
         FullResult object containing weights per pixel.
     """
     N, G = spatial_counts.shape
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = resolve_device(device)
 
     P_gpu = torch.tensor(norm_profiles, device=device)
     Q_gpu = torch.tensor(q_mat, device=device)

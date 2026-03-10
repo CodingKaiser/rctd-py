@@ -23,6 +23,7 @@ def choose_sigma(
     k_val: int = 1000,
     seed: int = 42,
     sq_matrices: Dict[str, np.ndarray] | None = None,
+    device: str = "auto",
 ) -> int:
     """Estimate the optimal sigma parameter for the Poisson-Lognormal model.
 
@@ -48,9 +49,10 @@ def choose_sigma(
         sq_matrices: precomputed spline coefficients dict (optional, computed if None)
     """
     from rctd._likelihood import compute_spline_coefficients
+    from rctd._types import resolve_device
 
     rng = np.random.default_rng(seed)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = resolve_device(device)
 
     # Filter pixels by min_umi (R: puck@nUMI > MIN_UMI)
     valid_idx = np.where(spatial_numi > min_umi)[0]

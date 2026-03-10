@@ -3,6 +3,7 @@
 from typing import NamedTuple
 
 import numpy as np
+import torch
 
 
 class RCTDConfig(NamedTuple):
@@ -28,6 +29,14 @@ class RCTDConfig(NamedTuple):
     step_size: float = 0.3
     K_val: int = 1000
     dtype: str = "float64"  # "float32" or "float64"; float32 saves GPU memory
+    device: str = "auto"  # "auto", "cpu", or "cuda"; auto uses GPU if available
+
+
+def resolve_device(device: str = "auto") -> torch.device:
+    """Resolve device string to torch.device."""
+    if device == "auto":
+        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    return torch.device(device)
 
 
 class FullResult(NamedTuple):

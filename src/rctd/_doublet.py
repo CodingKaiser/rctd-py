@@ -14,6 +14,7 @@ from rctd._types import (
     SPOT_CLASS_SINGLET,
     DoubletResult,
     RCTDConfig,
+    resolve_device,
 )
 
 
@@ -27,6 +28,7 @@ def run_doublet_mode(
     x_vals: np.ndarray,
     config: RCTDConfig,
     batch_size: int = 10000,
+    device: str = "auto",
 ) -> DoubletResult:
     """Run doublet mode deconvolution.
 
@@ -43,7 +45,7 @@ def run_doublet_mode(
     """
     N, G = spatial_counts.shape
     K = norm_profiles.shape[1]
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = resolve_device(device)
 
     import time as _time
 
@@ -61,6 +63,7 @@ def run_doublet_mode(
         sq_mat=sq_mat,
         x_vals=x_vals,
         batch_size=batch_size,
+        device=str(device),
     )
     W_full = full_res.weights  # (N, K)
     print(f"  [doublet] Step 1 done ({_time.time() - _t0:.1f}s)")

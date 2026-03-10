@@ -12,7 +12,7 @@ from rctd._multi import run_multi_mode
 from rctd._normalize import fit_bulk
 from rctd._reference import Reference
 from rctd._sigma import choose_sigma
-from rctd._types import DoubletResult, FullResult, MultiResult, RCTDConfig
+from rctd._types import DoubletResult, FullResult, MultiResult, RCTDConfig, resolve_device
 
 
 class RCTD:
@@ -109,7 +109,7 @@ class RCTD:
         if self.is_normalized:
             return
 
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device = resolve_device(self.config.device)
 
         # ── 1. Gene-list split (R: get_de_genes) ──
         # spatial_bulk must be indexed by ALL reference genes (not just common)
@@ -217,6 +217,7 @@ class RCTD:
                 n_epoch=self.config.N_epoch,
                 k_val=self.config.K_val,
                 sq_matrices=sq_matrices,
+                device=self.config.device,
             )
             sigma_elapsed = time.time() - t_sigma
             print(f"Chosen sigma: {self.sigma / 100.0} ({sigma_elapsed:.1f}s)")
@@ -281,6 +282,7 @@ def run_rctd(
         "sq_mat": rctd.sq_mat,
         "x_vals": rctd.x_vals,
         "batch_size": batch_size,
+        "device": rctd.config.device,
     }
 
     if mode == "full":

@@ -179,6 +179,7 @@ Stateful class for step-by-step control. Call `fit_platform_effects()`, then `ru
 | `MAX_MULTI_TYPES` | 4 | Max cell types in multi mode |
 | `CONFIDENCE_THRESHOLD` | 5.0 | Singlet confidence threshold |
 | `DOUBLET_THRESHOLD` | 20.0 | Doublet certainty threshold |
+| `device` | `"auto"` | `"auto"`, `"cpu"`, or `"cuda"` — force CPU/GPU |
 
 ### Result types
 
