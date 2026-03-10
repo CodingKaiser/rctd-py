@@ -46,7 +46,7 @@ result = run_rctd(spatial, reference, mode="doublet")
 ## Installation
 
 ```bash
-pip install rctd-py   # CPU (works everywhere; GPU auto-detected if CUDA available)
+uv pip install rctd-py   # or: pip install rctd-py
 ```
 
 <details>
@@ -58,14 +58,14 @@ Install PyTorch with CUDA **before** installing rctd-py — `pip install rctd-py
 
 ```bash
 # CUDA 12.4 (recommended for drivers >= 550.54)
-pip install torch --index-url https://download.pytorch.org/whl/cu124
-pip install rctd-py
+uv pip install torch --index-url https://download.pytorch.org/whl/cu124
+uv pip install rctd-py
 
 # CUDA 12.1 (for older drivers >= 530.30)
-pip install torch --index-url https://download.pytorch.org/whl/cu121
+uv pip install torch --index-url https://download.pytorch.org/whl/cu121
 
 # CUDA 11.8 (legacy, drivers >= 520.61)
-pip install torch --index-url https://download.pytorch.org/whl/cu118
+uv pip install torch --index-url https://download.pytorch.org/whl/cu118
 ```
 
 ### Verify GPU detection
