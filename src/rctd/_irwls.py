@@ -252,19 +252,18 @@ def _psd_batch(H: torch.Tensor, epsilon: float = 1e-3) -> tuple[torch.Tensor, to
     )
 
 
-@torch.jit.script
-def _solve_box_qp_batch_jit(
+@torch.compile(mode="reduce-overhead", fullgraph=True)
+def _solve_box_qp_batch_compiled(
     D: torch.Tensor,
     d: torch.Tensor,
     lower_bound: torch.Tensor,
     n_sweeps: int = 50,
 ) -> torch.Tensor:
-    """JIT-compiled Gauss-Seidel coordinate descent for batched box-constrained QP.
+    """Compiled Gauss-Seidel coordinate descent for batched box-constrained QP.
 
-    torch.jit.script eliminates Python interpreter overhead in the inner K-loop,
-    compiling it to native C++ → CUDA dispatch. This is critical for K=45 types
-    where the Python loop would otherwise launch ~2250 separate CUDA kernels
-    with ~10-50µs Python overhead each.
+    torch.compile with reduce-overhead mode uses Triton to fuse the inner
+    coordinate descent operations into optimized CUDA kernels, reducing
+    memory traffic and kernel launch overhead compared to torch.jit.script.
     """
     K = d.shape[1]
     D_diag = torch.diagonal(D, dim1=-2, dim2=-1)  # (N, K)
@@ -299,7 +298,7 @@ def _solve_box_qp_batch(
     Returns:
         x: (N, K) optimal solutions
     """
-    return _solve_box_qp_batch_jit(D, d, lower_bound, n_sweeps)
+    return _solve_box_qp_batch_compiled(D, d, lower_bound, n_sweeps)
 
 
 @torch.no_grad()
