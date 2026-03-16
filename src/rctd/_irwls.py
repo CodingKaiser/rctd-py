@@ -240,7 +240,10 @@ def _psd_batch(H: torch.Tensor, epsilon: float = 1e-3) -> tuple[torch.Tensor, to
         # Small matrices: GPU eigh avoids CPU↔GPU transfer overhead
         eigenvalues, eigenvectors = torch.linalg.eigh(H)
         eigenvalues = torch.clamp(eigenvalues, min=epsilon)
-        H_psd = eigenvectors @ torch.diag_embed(eigenvalues) @ eigenvectors.transpose(-1, -2)
+        # Fused reconstruction: V * sqrt(λ) → (V*sqrt(λ)) @ (V*sqrt(λ))^T
+        # Equivalent to V @ diag(λ) @ V^T but avoids diag_embed
+        scaled = eigenvectors * eigenvalues.unsqueeze(-2).sqrt()  # (N, K, K)
+        H_psd = scaled @ scaled.transpose(-1, -2)
         max_eig = eigenvalues[:, -1]
         return H_psd, max_eig
     else:
