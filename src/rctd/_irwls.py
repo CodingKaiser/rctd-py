@@ -231,25 +231,32 @@ def _get_derivatives_batch(
 def _psd_batch(H: torch.Tensor, epsilon: float = 1e-3) -> tuple[torch.Tensor, torch.Tensor]:
     """Batched PSD projection. H: (N, K, K) → (H_psd (N, K, K), max_eig (N,)).
 
-    Eigendecomposition is offloaded to CPU when input is on GPU. Batched eigh
-    on GPU is poorly parallelized for small matrices (K=45): cuSOLVER's
-    syevjBatched underutilizes GPU cores, taking ~2.7s for N=5000 on L40S.
-    CPU eigh with OpenBLAS/MKL threading handles the same batch in ~50ms.
-    The GPU↔CPU transfer for (5000, 45, 45) is ~2ms on PCIe 4.0.
+    For small K (<=16), runs eigh directly on GPU — Blackwell/Ampere handle
+    small batched eigendecompositions efficiently. For larger K, offloads to
+    CPU where OpenBLAS threading is faster than cuSOLVER's syevjBatched.
     """
-    orig_device = H.device
-    orig_dtype = H.dtype
-
-    # CPU eigh is faster for batched small matrices
-    H_cpu = H.cpu()
-    eigenvalues, eigenvectors = torch.linalg.eigh(H_cpu)
-    eigenvalues = torch.clamp(eigenvalues, min=epsilon)
-    H_psd = eigenvectors @ torch.diag_embed(eigenvalues) @ eigenvectors.transpose(-1, -2)
-    max_eig = eigenvalues[:, -1]
-
-    return H_psd.to(device=orig_device, dtype=orig_dtype), max_eig.to(
-        device=orig_device, dtype=orig_dtype
-    )
+    K = H.shape[-1]
+    if H.device.type == "cuda" and K <= 16:
+        # Small matrices: GPU eigh avoids CPU↔GPU transfer overhead
+        eigenvalues, eigenvectors = torch.linalg.eigh(H)
+        eigenvalues = torch.clamp(eigenvalues, min=epsilon)
+        H_psd = eigenvectors @ torch.diag_embed(eigenvalues) @ eigenvectors.transpose(-1, -2)
+        max_eig = eigenvalues[:, -1]
+        return H_psd, max_eig
+    else:
+        # Large K or CPU: offload to CPU for eigh
+        orig_device = H.device
+        orig_dtype = H.dtype
+        H_cpu = H if H.device.type == "cpu" else H.cpu()
+        eigenvalues, eigenvectors = torch.linalg.eigh(H_cpu)
+        eigenvalues = torch.clamp(eigenvalues, min=epsilon)
+        H_psd = eigenvectors @ torch.diag_embed(eigenvalues) @ eigenvectors.transpose(-1, -2)
+        max_eig = eigenvalues[:, -1]
+        if H.device.type == "cpu":
+            return H_psd, max_eig
+        return H_psd.to(device=orig_device, dtype=orig_dtype), max_eig.to(
+            device=orig_device, dtype=orig_dtype
+        )
 
 
 @torch.compile(dynamic=True)
