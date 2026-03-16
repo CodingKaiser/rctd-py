@@ -489,8 +489,8 @@ def solve_irwls_batch_shared(
     eye_K = torch.eye(K, dtype=dtype, device=device)
     converged = torch.zeros(N, dtype=torch.bool, device=device)
 
-    # Precompute P outer product for Hessian: (G, K*K)
-    # H[n] = sum_g w_g[n,g] * P[g,:,None] * P[g,None,:] = w_g @ P_outer → (K,K)
+    # Precompute frequently used derived matrices
+    P_T = P.T.contiguous()  # (K, G) — avoids repeated non-contiguous transpose
     P_outer = (P[:, :, None] * P[:, None, :]).reshape(G, K * K)
 
     threshold = torch.clamp(nUMI_batch * 1e-7, min=1e-4)
@@ -511,7 +511,7 @@ def solve_irwls_batch_shared(
 
         # Prediction: matmul replaces bmm
         # S @ w = (nUMI * P) @ w = nUMI * (w @ P.T)
-        prediction = torch.abs(nUMI_act.unsqueeze(1) * (solution @ P.T))
+        prediction = torch.abs(nUMI_act.unsqueeze(1) * (solution @ P_T))
         prediction = torch.clamp(prediction, min=thresh_act.unsqueeze(1))
 
         # Derivatives
