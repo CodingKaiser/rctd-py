@@ -39,20 +39,18 @@ The IRWLS solver (`solve_irwls_batch_shared`) is the innermost hot loop:
 - Each iteration: predict → derivatives → Hessian → PSD projection → box-QP → update
 - Active pixel compaction skips converged pixels
 
-### GPU optimization layers (RAPIDS-inspired)
+### GPU optimization layers
 
-Three optimization layers accelerate the hot path beyond basic `torch.compile`:
+Two optimization layers accelerate the hot path beyond basic `torch.compile`:
 
-1. **Custom Triton kernel** (`_likelihood.py:_calc_q_all_triton`): Fuses the entire cubic spline interpolation into a single GPU kernel launch. Falls back to `torch.compile` on CPU or when Triton is unavailable. The dispatch is set at module import time.
-
-2. **Analytical K=2 fast paths** (`_irwls.py`): For doublet-mode pairwise fits (K=2), closed-form solutions replace iterative solvers:
+1. **Analytical K=2 fast paths** (`_irwls.py`): For doublet-mode pairwise fits (K=2), closed-form solutions replace iterative solvers:
    - `_psd_2x2`: Analytical eigendecomposition (avoids cuSOLVER)
    - `_solve_box_qp_2`: Cramer's rule + clamping (avoids 50-sweep Gauss-Seidel)
    - Dispatched automatically by `_psd_batch` and `_solve_box_qp_batch` when K==2
 
-3. **Auto batch sizing** (`_types.py:auto_batch_size`): Calculates optimal GPU batch size from available VRAM using per-pixel memory footprint estimation. Used by `run_rctd(batch_size="auto")` (default).
+2. **Auto batch sizing** (`_types.py:auto_batch_size`): Calculates optimal GPU batch size from available VRAM using per-pixel memory footprint estimation. Used by `run_rctd(batch_size="auto")` (default).
 
-**Important**: The Triton kernel uses `tl.constexpr` for K_val and N_X. When modifying the spline evaluation logic, keep the eager `_calc_q_all_impl` in sync — it serves as the CPU/fallback and the ground truth for tests.
+**Why no custom Triton kernel**: A hand-written Triton kernel for `calc_q_all` was attempted but causes float64 precision divergence in the grid index computation (`sqrt → floor → m`). Even with dtype-preserving casts, Triton's `tl.math.sqrt` produces different rounding than PyTorch's `torch.sqrt` at float64 boundaries, shifting spline table lookups and changing results. `torch.compile` already generates fused Inductor/Triton kernels from `_calc_q_all_impl` that are both fast and hash-identical to the eager implementation.
 
 ## CLI
 

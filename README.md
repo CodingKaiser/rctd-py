@@ -1,7 +1,7 @@
 <p align="center">
   <h1 align="center">rctd-py</h1>
   <p align="center">
-    <strong>Spatial transcriptomics deconvolution — up to 120x faster than R spacexr with GPU</strong>
+    <strong>Spatial transcriptomics deconvolution — 6–11x faster than R spacexr with GPU, 3–5x on CPU alone</strong>
   </p>
   <p align="center">
     <a href="https://github.com/p-gueguen/rctd-py/actions/workflows/ci.yml"><img src="https://github.com/p-gueguen/rctd-py/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
@@ -22,7 +22,8 @@ Deconvolve spatial transcriptomics spots (Visium, Xenium, MERFISH, Slide-seq, �
 
 | | |
 |---|---|
-| ⚡ **5–120x faster than R spacexr** | Xenium 58k cells, multi mode: **7s** vs 2.5 hours in R |
+| ⚡ **3–5x faster than R on CPU** | Xenium 36k cells: **3.5 min** (rctd-py CPU) vs 12 min (R spacexr) |
+| 🚀 **6–11x with GPU** | Same dataset: **1.2 min** (rctd-py GPU) — 11x vs R |
 | 🎯 **99.7% concordance** with R spacexr | **100%** with `sigma_override` — per-pixel solver is bit-identical |
 | 🔧 **Drop-in replacement** | Same algorithm, same parameters, same results — just faster |
 | 📦 **`pip install rctd-py`** | Pure Python, works on CPU out of the box |
@@ -39,18 +40,18 @@ Benchmarked on 3 datasets across all RCTD modes (full, doublet, multi). All runs
 
 | Dataset | Cells | K | Mode | R spacexr | rctd-py GPU | GPU vs R |
 |---------|-------|---|------|-----------|-------------|----------|
-| Xenium Liver (small) | 13,940 | 45 | full | 5.3 min | **4s** | **80x** |
-| | | | doublet | 14.1 min | **5s** | **156x** |
-| | | | multi | 6.7 min | **4s** | **97x** |
-| Xenium Mouse Brain | 36,362 | 22 | full | 38.1 min | **2s** | **937x** |
-| | | | doublet | 81.9 min | **4s** | **1370x** |
-| | | | multi | 76.5 min | **3s** | **1515x** |
-| Xenium Liver (large) | 58,191 | 45 | full | 14.3 min | **7s** | **122x** |
-| | | | doublet | 51.1 min | **8s** | **383x** |
-| | | | multi | 153.3 min | **7s** | **1314x** |
-| **VisiumHD Mouse Brain (8µm)** | **392,580** | 22 | full | — | **58s** | — |
+| Xenium Liver (small) | 13,940 | 45 | full | 5.3 min | 2.2 min | **2.4x** |
+| | | | doublet | 14.1 min | 2.4 min | **6.0x** |
+| | | | multi | 6.7 min | 2.4 min | **2.8x** |
+| Xenium Mouse Brain | 36,362 | 22 | full | 4.7 min | 1.0 min | **4.7x** |
+| | | | doublet | 12.4 min | 1.2 min | **10.6x** |
+| | | | multi | 9.5 min | 1.3 min | **7.5x** |
+| Xenium Liver (large) | 58,191 | 45 | full | 27.1 min | 6.4 min | **4.2x** |
+| | | | doublet | 51.1 min | 6.6 min | **7.7x** |
+| | | | multi | 14.3 min | 6.6 min | **2.1x** |
+| **VisiumHD Mouse Brain (8µm)** | **392,580** | 22 | full | — | **1.0 min** | — |
 
-The VisiumHD benchmark (392k spots) demonstrates scalability to large datasets — full deconvolution in under a minute (33s deconv + 25s sigma, 6.7k spots/s). GPU speedup ranges from **80x to >1000x** depending on dataset size and mode. The speedup comes from three layers: (1) PyTorch's batched tensor operations, (2) `torch.compile` kernel fusion via Inductor/Triton, and (3) analytical closed-form solvers for K=2 doublet fits that replace iterative optimization entirely.
+The VisiumHD benchmark demonstrates scalability to ~400k spots in under a minute (33s deconv + 25s sigma estimation, Blackwell GPU). GPU speedup is highest in **doublet mode** (6–11x) because R spacexr's pairwise fitting is the main bottleneck — rctd-py batches all C(K,2) pairs into a single tensor operation. Full and multi modes show 2–5x speedup.
 
 ### Memory requirements
 
