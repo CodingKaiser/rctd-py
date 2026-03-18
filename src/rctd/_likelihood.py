@@ -437,8 +437,14 @@ if _HAS_TRITON:
         grid = ((N_elem + BLOCK_SIZE - 1) // BLOCK_SIZE,)
 
         _calc_q_all_kernel[grid](
-            Y, lam, Q_mat, SQ_mat, x_vals,
-            d0, d1, d2,
+            Y,
+            lam,
+            Q_mat,
+            SQ_mat,
+            x_vals,
+            d0,
+            d1,
+            d2,
             N_elem,
             K_val=K_val,
             N_X=N_X,
