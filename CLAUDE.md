@@ -25,6 +25,8 @@ GPU-accelerated Python reimplementation of spacexr RCTD for spatial transcriptom
 | `src/rctd/_multi.py` | Multi-mode pipeline (variable number of types) |
 | `src/rctd/_sigma.py` | Sigma estimation (noise parameter) |
 | `src/rctd/_rctd.py` | Top-level `run_rctd()` entry point |
+| `src/rctd/cli.py` | Click CLI: `rctd info`, `rctd validate`, `rctd run` |
+| `src/rctd/_types.py` | Config, result types, `auto_batch_size`, `resolve_device` |
 
 ### Solver pipeline
 
@@ -37,6 +39,18 @@ The IRWLS solver (`solve_irwls_batch_shared`) is the innermost hot loop:
 - Each iteration: predict → derivatives → Hessian → PSD projection → box-QP → update
 - Active pixel compaction skips converged pixels
 
+## CLI
+
+Entry point `rctd` is registered in `pyproject.toml` via `[project.scripts]`. Three subcommands:
+
+- `rctd info` — environment info (versions, GPU detection), `--json` for machine-readable
+- `rctd validate` — pre-flight checks on h5ad inputs (fast, no GPU)
+- `rctd run` — full deconvolution pipeline, writes annotated h5ad output
+
+The `run` command uses `RCTD` class directly (not `run_rctd()`), manages its own data loading, and writes results back into a copy of the spatial AnnData with `_write_results_to_adata()`. Progress goes to stderr when `--json` is set.
+
+Tests in `tests/test_cli.py` — slow tests (marked `@pytest.mark.slow`) run actual deconvolution on synthetic data via `conftest._make_synthetic_reference` / `_make_synthetic_spatial`.
+
 ## Testing
 
 ```bash
@@ -44,6 +58,16 @@ uv run pytest tests/ -v
 ```
 
 Tests use `torch.compile(dynamic=True)` which has a ~60s JIT warmup on first run.
+
+### Test markers
+
+- No marker: fast unit tests (~90s total including JIT warmup)
+- `@pytest.mark.slow`: CLI integration tests that run full RCTD pipeline (~30s each)
+- `@pytest.mark.performance`: benchmarking tests (excluded by default via `addopts`)
+
+### Known tolerance notes
+
+- `test_batch_matches_single` uses `atol=5e-5` — batch vs single-pixel IRWLS can differ slightly due to floating-point convergence order
 
 ## Benchmarking
 
