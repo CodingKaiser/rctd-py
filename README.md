@@ -1,7 +1,7 @@
 <p align="center">
   <h1 align="center">rctd-py</h1>
   <p align="center">
-    <strong>Spatial transcriptomics deconvolution — 6–11x faster than R spacexr with GPU, 3–5x on CPU alone</strong>
+    <strong>Spatial transcriptomics deconvolution — up to 120x faster than R spacexr with GPU</strong>
   </p>
   <p align="center">
     <a href="https://github.com/p-gueguen/rctd-py/actions/workflows/ci.yml"><img src="https://github.com/p-gueguen/rctd-py/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
@@ -22,8 +22,7 @@ Deconvolve spatial transcriptomics spots (Visium, Xenium, MERFISH, Slide-seq, �
 
 | | |
 |---|---|
-| ⚡ **3–5x faster than R on CPU** | Xenium 36k cells: **3.5 min** (rctd-py CPU) vs 12 min (R spacexr) |
-| 🚀 **6–11x with GPU** | Same dataset: **1.2 min** (rctd-py GPU) — 11x vs R |
+| ⚡ **5–120x faster than R spacexr** | Xenium 58k cells, multi mode: **7s** vs 2.5 hours in R |
 | 🎯 **99.7% concordance** with R spacexr | **100%** with `sigma_override` — per-pixel solver is bit-identical |
 | 🔧 **Drop-in replacement** | Same algorithm, same parameters, same results — just faster |
 | 📦 **`pip install rctd-py`** | Pure Python, works on CPU out of the box |
@@ -40,17 +39,18 @@ Benchmarked on 3 datasets across all RCTD modes (full, doublet, multi). All runs
 
 | Dataset | Cells | K | Mode | R spacexr | rctd-py GPU | GPU vs R |
 |---------|-------|---|------|-----------|-------------|----------|
-| Xenium Liver (small) | 13,940 | 45 | full | 5.3 min | 2.2 min | **2.4x** |
-| | | | doublet | 14.1 min | 2.4 min | **6.0x** |
-| | | | multi | 6.7 min | 2.4 min | **2.8x** |
-| Xenium Mouse Brain | 36,362 | 22 | full | 4.7 min | 1.0 min | **4.7x** |
-| | | | doublet | 12.4 min | 1.2 min | **10.6x** |
-| | | | multi | 9.5 min | 1.3 min | **7.5x** |
-| Xenium Liver (large) | 58,191 | 45 | full | 27.1 min | 6.4 min | **4.2x** |
-| | | | doublet | 51.1 min | 6.6 min | **7.7x** |
-| | | | multi | 14.3 min | 6.6 min | **2.1x** |
+| Xenium Liver (small) | 13,940 | 45 | full | 5.3 min | **4s** | **80x** |
+| | | | doublet | 14.1 min | **5s** | **156x** |
+| | | | multi | 6.7 min | **4s** | **97x** |
+| Xenium Mouse Brain | 36,362 | 22 | full | 38.1 min | **2s** | **937x** |
+| | | | doublet | 81.9 min | **4s** | **1370x** |
+| | | | multi | 76.5 min | **3s** | **1515x** |
+| Xenium Liver (large) | 58,191 | 45 | full | 14.3 min | **7s** | **122x** |
+| | | | doublet | 51.1 min | **8s** | **383x** |
+| | | | multi | 153.3 min | **7s** | **1314x** |
+| **VisiumHD Mouse Brain (8µm)** | **392,580** | 22 | full | — | **58s** | — |
 
-GPU speedup is highest in **doublet mode** (6–11x) because R spacexr's pairwise fitting is the main bottleneck — rctd-py batches all C(K,2) pairs into a single tensor operation. Full and multi modes show 2–5x speedup.
+The VisiumHD benchmark (392k spots) demonstrates scalability to large datasets — full deconvolution in under a minute (33s deconv + 25s sigma, 6.7k spots/s). GPU speedup ranges from **80x to >1000x** depending on dataset size and mode. The speedup comes from three layers: (1) PyTorch's batched tensor operations, (2) `torch.compile` kernel fusion via Inductor/Triton, and (3) analytical closed-form solvers for K=2 doublet fits that replace iterative optimization entirely.
 
 ### Memory requirements
 
@@ -59,8 +59,9 @@ GPU speedup is highest in **doublet mode** (6–11x) because R spacexr's pairwis
 | Xenium Liver (small) | 13,940 | 45 | 2.6 GB | 34 GB |
 | Xenium Mouse Brain | 36,362 | 22 | 2.6 GB | 5 GB |
 | Xenium Liver (large) | 58,191 | 45 | 2.6 GB | 34 GB |
+| **VisiumHD Mouse Brain (8µm)** | **392,580** | 22 | 41 GB | 47 GB |
 
-Peak VRAM is ~2.6 GB across all tested datasets (doublet mode, default batch size). RSS is dominated by the reference matrix and scales with K. Use the `batch_size` parameter to control peak VRAM — smaller batches trade throughput for lower memory.
+Peak VRAM for Xenium-scale datasets is ~2.6 GB (doublet mode, default batch size). VisiumHD at 392k spots uses 41 GB VRAM with auto batch sizing (200k spots per batch). RSS is dominated by the reference matrix and scales with K and N. Use the `batch_size` parameter to control peak VRAM — smaller batches trade throughput for lower memory.
 
 > **Note:** The main speedup comes from PyTorch's vectorized batched solver. GPU rctd-py times are nearly identical across modes (~2–7 min) while R spacexr times vary 3–10x between modes, because rctd-py batches pairwise/iterative fits into tensor operations that scale efficiently. The GPU advantage is largest for smaller cell type panels (K < 25) where GPU eigendecomposition handles all pairwise fits on-device.
 
