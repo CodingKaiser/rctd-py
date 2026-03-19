@@ -5,7 +5,13 @@ from rctd._normalize import fit_bulk
 from rctd._rctd import RCTD, run_rctd
 from rctd._reference import Reference
 from rctd._sigma import choose_sigma
-from rctd._types import DoubletResult, FullResult, MultiResult, RCTDConfig
+from rctd._types import (
+    SPOT_CLASS_NAMES,
+    DoubletResult,
+    FullResult,
+    MultiResult,
+    RCTDConfig,
+)
 
 try:
     from rctd._version import __version__
@@ -25,4 +31,5 @@ __all__ = [
     "run_full_mode",
     "run_doublet_mode",
     "run_multi_mode",
+    "SPOT_CLASS_NAMES",
 ]

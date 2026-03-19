@@ -206,8 +206,10 @@ def _(mo):
 
 @app.cell
 def _():
-    class_labels = {1: 'singlet', 2: 'doublet_certain', 3: 'doublet_uncertain', 4: 'reject'}
-    return (class_labels,)
+    from rctd import SPOT_CLASS_NAMES
+
+    class_labels = dict(enumerate(SPOT_CLASS_NAMES))
+    return SPOT_CLASS_NAMES, class_labels
 
 
 @app.cell
@@ -353,7 +355,7 @@ def _(
     axes[0].set_aspect('equal')
     axes[0].set_xlabel('x')
     axes[0].set_ylabel('y')
-    _class_colors = {1: '#4C78A8', 2: '#F58518', 3: '#E45756', 4: '#888888'}
+    _class_colors = {0: '#888888', 1: '#4C78A8', 2: '#F58518', 3: '#E45756'}
     for _cls, color in _class_colors.items():
         mask = result_doublet.spot_class == _cls
         if mask.any():
